@@ -301,7 +301,7 @@ def test_roundtrip(tmpdir, basic_python_env):
             assert not member.startswith(os.path.sep)
 
         extract_path = str(tmpdir.join('env'))
-        fil.extractall(extract_path, filter="data")
+        fil.extractall(extract_path)
 
     # Shebang rewriting happens before prefixes are fixed
     textfile = os.path.join(extract_path, BIN_DIR, 'conda-pack-test-lib1')
@@ -374,7 +374,7 @@ def test_pack_with_conda(tmpdir, fix_dest):
     assert tarfile.is_tarfile(out_path)
     # Extract tarfile
     with tarfile.open(out_path, ignore_zeros=True) as fil:
-        fil.extractall(extract_path, filter="data")
+        fil.extractall(extract_path)
 
     if on_win:
         fnames = ['conda.exe', 'activate.bat']
@@ -654,7 +654,7 @@ def test_activate(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path, filter="data")
+        fil.extractall(extract_path)
 
     # Check that activate environment variable is set
     if on_win:
@@ -871,7 +871,7 @@ def test_env_vars_restores_preexisting(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path, filter="data")
+        fil.extractall(extract_path)
 
     if not on_win:
         command = (
@@ -897,7 +897,7 @@ def test_env_vars_unsets_on_deactivate(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path, filter="data")
+        fil.extractall(extract_path)
 
     command = (
         "unset MY_EXISTING_VAR && "
