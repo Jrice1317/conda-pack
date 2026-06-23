@@ -12,7 +12,7 @@ import pytest
 
 from conda_pack import CondaEnv, CondaPackException, pack
 from conda_pack.compat import load_source, on_win
-from conda_pack.core import BIN_DIR, File, Packer, name_to_prefix
+from conda_pack.core import BIN_DIR, File, Packer, name_to_prefix, _SH_ACTIVATE_TEMPLATE, _SH_DEACTIVATE_TEMPLATE
 
 from .conftest import (
     activate_scripts_path,
@@ -24,6 +24,7 @@ from .conftest import (
     has_conda_path,
     nopython_path,
     py310_path,
+    env_vars_path,
 )
 
 BIN_DIR_L = BIN_DIR.lower()
@@ -830,3 +831,95 @@ def test_windows_extended_length_path_normalization_unknown_mode():
                     assert actual_placeholder == expected_prefix, (
                         f"Test case {i}: expected {expected_prefix}, got {actual_placeholder}"
                     )
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_sh_activate_template_saves_and_sets():
+    result = _SH_ACTIVATE_TEMPLATE.format(key="FOO", val="bar")
+    assert "${FOOx}" in result
+    assert "_CONDA_PACK_OLD_FOO" in result
+    assert "export FOO='bar'" in result
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_sh_activate_template_equals_in_value():
+    result = _SH_ACTIVATE_TEMPLATE.format(key="KEY", val="a=b=c")
+    assert "export KEY='a=b=c'" in result
+
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_sh_activate_template_single_quote_in_value():
+    val = "it's"
+    escaped = val.replace("'", "'\\''")
+    result = _SH_ACTIVATE_TEMPLATE.format(key="KEY", val=escaped)
+    assert "export KEY='it'\\''s'" in result
+
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_sh_deactivate_template_restores_or_unsets():
+    result = _SH_DEACTIVATE_TEMPLATE.format(key="FOO")
+    assert "${_CONDA_PACK_OLD_FOO+x}" in result
+    assert 'export FOO="${_CONDA_PACK_OLD_FOO}"' in result
+    assert "unset _CONDA_PACK_OLD_FOO" in result
+    assert "unset FOO" in result
+
+
+def test_env_vars_restores_preexisting(tmpdir):
+    """Variable that existed before activation should be restored, not unset."""
+    out_path = os.path.join(str(tmpdir), "env_vars.tar")
+    extract_path = str(tmpdir.join("env"))
+
+    env = CondaEnv.from_prefix(env_vars_path)
+    env.pack(out_path)
+
+    with tarfile.open(out_path) as fil:
+        fil.extractall(extract_path)
+
+    if not on_win:
+        command = (
+            "export CONDA_PACK_TEST_VAR=preexisting && "
+            ". {path}/bin/activate && "
+            "test \"$CONDA_PACK_TEST_VAR\" = hello && "
+            ". {path}/bin/deactivate && "
+            "test \"$CONDA_PACK_TEST_VAR\" = preexisting && "
+            "echo 'Done'"
+        ).format(path=extract_path)
+        out = subprocess.check_output(
+            ["/usr/bin/env", "bash", "-c", command], stderr=subprocess.STDOUT
+        ).decode()
+        assert out == "Done\n"
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_env_vars_unsets_on_deactivate(tmpdir):
+    """Variable that didn't exist before activation should be unset on deactivate."""
+    out_path = os.path.join(str(tmpdir), "env_vars.tar")
+    extract_path = str(tmpdir.join("env"))
+
+    env = CondaEnv.from_prefix(env_vars_path)
+    env.pack(out_path)
+
+    with tarfile.open(out_path) as fil:
+        fil.extractall(extract_path)
+
+    command = (
+        "unset CONDA_PACK_TEST_VAR && "
+        ". {path}/bin/activate && "
+        "test \"$CONDA_PACK_TEST_VAR\" = hello && "
+        ". {path}/bin/deactivate && "
+        "test -z \"${{CONDA_PACK_TEST_VAR+x}}\" && "
+        "echo 'Done'"
+    ).format(path=extract_path)
+    out = subprocess.check_output(
+        ["/usr/bin/env", "bash", "-c", command], stderr=subprocess.STDOUT
+    ).decode()
+    assert out == "Done\n"
+
+@pytest.mark.skipif(on_win, reason="posix only")
+def test_env_vars_scripts_written_to_archive(tmpdir):
+    """activate_env_vars.sh and deactivate_env_vars.sh appear in archive iff env vars defined."""
+    out_path = os.path.join(str(tmpdir), "env_vars.tar")
+    env = CondaEnv.from_prefix(env_vars_path)
+    env.pack(out_path)
+
+    with tarfile.open(out_path) as fil:
+        names = fil.getnames()
+    assert "conda-meta/activate_env_vars.sh" in names
+    assert "conda-meta/deactivate_env_vars.sh" in names
