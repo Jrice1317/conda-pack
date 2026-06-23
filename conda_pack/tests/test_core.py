@@ -301,7 +301,7 @@ def test_roundtrip(tmpdir, basic_python_env):
             assert not member.startswith(os.path.sep)
 
         extract_path = str(tmpdir.join('env'))
-        fil.extractall(extract_path)
+        fil.extractall(extract_path, filter="data")
 
     # Shebang rewriting happens before prefixes are fixed
     textfile = os.path.join(extract_path, BIN_DIR, 'conda-pack-test-lib1')
@@ -374,7 +374,7 @@ def test_pack_with_conda(tmpdir, fix_dest):
     assert tarfile.is_tarfile(out_path)
     # Extract tarfile
     with tarfile.open(out_path, ignore_zeros=True) as fil:
-        fil.extractall(extract_path)
+        fil.extractall(extract_path, filter="data")
 
     if on_win:
         fnames = ['conda.exe', 'activate.bat']
@@ -654,7 +654,7 @@ def test_activate(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path)
+        fil.extractall(extract_path, filter="data")
 
     # Check that activate environment variable is set
     if on_win:
@@ -835,7 +835,7 @@ def test_windows_extended_length_path_normalization_unknown_mode():
 @pytest.mark.skipif(on_win, reason="posix only")
 def test_sh_activate_template_saves_and_sets():
     result = _SH_ACTIVATE_TEMPLATE.format(key="FOO", val="bar")
-    assert "${FOOx}" in result
+    assert "${FOO+x}" in result
     assert "_CONDA_PACK_OLD_FOO" in result
     assert "export FOO='bar'" in result
 
@@ -871,15 +871,15 @@ def test_env_vars_restores_preexisting(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path)
+        fil.extractall(extract_path, filter="data")
 
     if not on_win:
         command = (
-            "export CONDA_PACK_TEST_VAR=preexisting && "
+            "export MY_EXISTING_VAR=hello && "
             ". {path}/bin/activate && "
-            "test \"$CONDA_PACK_TEST_VAR\" = hello && "
+            "test \"$MY_EXISTING_VAR\" = goodbye && "
             ". {path}/bin/deactivate && "
-            "test \"$CONDA_PACK_TEST_VAR\" = preexisting && "
+            "test \"$MY_EXISTING_VAR\" = hello && "
             "echo 'Done'"
         ).format(path=extract_path)
         out = subprocess.check_output(
@@ -897,14 +897,14 @@ def test_env_vars_unsets_on_deactivate(tmpdir):
     env.pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        fil.extractall(extract_path)
+        fil.extractall(extract_path, filter="data")
 
     command = (
-        "unset CONDA_PACK_TEST_VAR && "
+        "unset MY_EXISTING_VAR && "
         ". {path}/bin/activate && "
-        "test \"$CONDA_PACK_TEST_VAR\" = hello && "
+        "test \"$MY_EXISTING_VAR\" = goodbye && "
         ". {path}/bin/deactivate && "
-        "test -z \"${{CONDA_PACK_TEST_VAR+x}}\" && "
+        "test -z \"${{MY_EXISTING_VAR+x}}\" && "
         "echo 'Done'"
     ).format(path=extract_path)
     out = subprocess.check_output(
