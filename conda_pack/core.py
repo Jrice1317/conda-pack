@@ -1336,8 +1336,7 @@ class Packer:
                 )
                 self._write_text_file(
                     os.path.join("conda-meta", "deactivate_env_vars.sh"),
-                    "".join(_SH_DEACTIVATE_TEMPLATE.format(key=k) for k in env_vars
-                    ),
+                    "".join(_SH_DEACTIVATE_TEMPLATE.format(key=k) for k in env_vars),
                 )
 
         # No `conda-unpack` command if dest-prefix specified
