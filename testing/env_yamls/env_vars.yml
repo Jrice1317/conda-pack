@@ -7,5 +7,5 @@ dependencies:
   - requests
 
 variables:
-  MY_EXISTING_VAR: goodbye
-  MY_SPECIAL_VAR: "red=b!%&#$=123"
+  MY_EXISTING_VAR: hello
+  MY_SPECIAL_VAR: "red=b!%&#$=12'3"

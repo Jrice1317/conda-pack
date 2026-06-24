@@ -1325,10 +1325,14 @@ class Packer:
             with open(state_path) as f:
                 env_vars = json.load(f).get("env_vars", {})
             if env_vars:
+                escaped_vars = {k: str(v).replace("'", "'\\''") for k, v in env_vars.items()}
+                activate_lines = [
+                    _SH_ACTIVATE_TEMPLATE.format(key=k, val=v)
+                    for k, v in escaped_vars.items()
+                ]
                 self._write_text_file(
                     os.path.join("conda-meta", "activate_env_vars.sh"),
-                    "".join(_SH_ACTIVATE_TEMPLATE.format(key=k, val=str(v).replace("'", "'\\''")) for k, v in env_vars.items()
-                    ),
+                    "".join(activate_lines)
                 )
                 self._write_text_file(
                     os.path.join("conda-meta", "deactivate_env_vars.sh"),
