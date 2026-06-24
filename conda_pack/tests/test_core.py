@@ -832,6 +832,7 @@ def test_windows_extended_length_path_normalization_unknown_mode():
                         f"Test case {i}: expected {expected_prefix}, got {actual_placeholder}"
                     )
 
+
 @pytest.mark.skipif(on_win, reason="posix only")
 def test_env_vars_activate_deactivate(tmpdir):
     """Verifies core.py reads yaml, escapes values, and writes correct scripts
