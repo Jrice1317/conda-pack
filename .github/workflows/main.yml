@@ -96,8 +96,7 @@ jobs:
       run:
         shell: bash
     runs-on: ${{ matrix.os }}
-    needs: ${{ startsWith(github.ref, 'refs/tags/') && fromJSON('["package", "testbed"]') || fromJSON('["testbed"]') }}
-    strategy:
+    needs: ["testbed"]
       fail-fast: false
       matrix:
         os: [macos-14,ubuntu-latest,windows-latest]

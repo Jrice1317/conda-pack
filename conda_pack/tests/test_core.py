@@ -882,6 +882,6 @@ def test_no_env_vars_scripts_without_state(tmpdir):
     CondaEnv.from_prefix(basic_python_path).pack(out_path)
     with tarfile.open(out_path) as fil:
         names = fil.getnames()
-    assert "conda-meta/state" not in names
     assert "conda-meta/activate_env_vars.sh" not in names
     assert "conda-meta/deactivate_env_vars.sh" not in names
+    assert "conda-meta/state" not in names
