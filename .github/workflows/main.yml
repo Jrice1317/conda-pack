@@ -96,7 +96,8 @@ jobs:
       run:
         shell: bash
     runs-on: ${{ matrix.os }}
-    needs: ["testbed"]
+    needs: [testbed]
+    strategy:
       fail-fast: false
       matrix:
         os: [macos-14,ubuntu-latest,windows-latest]
