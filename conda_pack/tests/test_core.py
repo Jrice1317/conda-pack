@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import yaml
 from glob import glob
 from unittest.mock import Mock, mock_open, patch
 
@@ -840,26 +841,31 @@ def test_env_vars_activate_deactivate(tmpdir):
     - pre-existing var is overridden then restored
     - non-existing var with special chars is set then unset
     """
+    env_vars_yaml_path = os.path.join(env_dir, "..", "..", "env_yamls", "env_vars.yml")
+    with open(env_vars_yaml_path) as f:
+        env_var_items = list(yaml.safe_load(f)["variables"].items())
+    existing_key, existing_val = env_var_items[0]
+    special_key, special_val = env_var_items[1]
+
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
     CondaEnv.from_prefix(env_vars_path).pack(out_path)
 
     with tarfile.open(out_path) as fil:
-        env_vars = json.loads(fil.extractfile("conda-meta/state").read())["env_vars"]
+        state_file = fil.extractfile("conda-meta/state").read().decode()
         activate_script = fil.extractfile("conda-meta/activate_env_vars.sh").read().decode()
         deactivate_script = fil.extractfile("conda-meta/deactivate_env_vars.sh").read().decode()
     with tarfile.open(out_path) as fil:
         fil.extractall(extract_path)
 
-    for key, val in env_vars.items():
+    assert "env_vars" in state_file
+
+    for key, val in env_var_items:
         escaped_var = str(val).replace("'", "'\\''")
         assert _SH_ACTIVATE_TEMPLATE.format(key=key, val=escaped_var) in activate_script
         assert _SH_DEACTIVATE_TEMPLATE.format(key=key) in deactivate_script
 
-    existing_key, existing_val = next(iter(env_vars.items()))
-    special_key, special_val = list(env_vars.items())[1]
     command = " && ".join([
-        f"unset {special_key}",
         f"export {existing_key}=preexisting",
         f". {extract_path}/bin/activate",
         f'test "${existing_key}" = "{existing_val}"',
