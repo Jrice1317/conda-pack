@@ -22,6 +22,7 @@ from .conftest import (
     basic_python_missing_files_path,
     basic_python_path,
     env_dir,
+    test_dir,
     has_conda_path,
     nopython_path,
     py310_path,
@@ -841,7 +842,7 @@ def test_env_vars_activate_deactivate(tmpdir):
     - pre-existing var is overridden then restored
     - non-existing var with special chars is set then unset
     """
-    env_vars_yaml_path = os.path.join(env_dir, "..", "..", "env_yamls", "env_vars.yml")
+    env_vars_yaml_path = os.path.join(test_dir, "..", "..", "testing", "env_yamls", "env_vars.yml")
     with open(env_vars_yaml_path) as f:
         env_var_items = list(yaml.safe_load(f)["variables"].items())
     existing_key, existing_val = env_var_items[0]
