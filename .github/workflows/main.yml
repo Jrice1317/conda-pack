@@ -106,11 +106,11 @@ jobs:
         include:
           # include the appropriate dependencies for testing SquashFS on each OS
           - os: macos-14
-            conda_deps: "conda-forge::squashfs-tools conda-forge::fish conda-forge::pyyaml"
+            conda_deps: "conda-forge::squashfs-tools conda-forge::fish"
           - os: ubuntu-latest
-            conda_deps: "conda-forge::squashfs-tools conda-forge::squashfuse conda-forge::fish conda-forge::pyyaml"
+            conda_deps: "conda-forge::squashfs-tools conda-forge::squashfuse conda-forge::fish"
           - os: windows-latest
-            conda_deps: "conda-forge::pyyaml"
+            conda_deps: ""
     steps:
     - name: Retrieve the source code
       uses: actions/checkout@v6.0.2
