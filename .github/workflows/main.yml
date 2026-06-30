@@ -17,7 +17,6 @@ concurrency:
 
 jobs:
   package:
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
     - name: Retrieve the source code
@@ -98,7 +97,7 @@ jobs:
       run:
         shell: bash
     runs-on: ${{ matrix.os }}
-    needs: [testbed]
+    needs: [package,testbed]
     strategy:
       fail-fast: false
       matrix:
@@ -130,7 +129,6 @@ jobs:
         path: ${{ steps.conda-root.outputs.value }}
         key: testbed-${{ matrix.os }}-${{ hashFiles('testing') }}-5
     - name: Download the build artifact
-      if: startsWith(github.ref, 'refs/tags/')
       uses: actions/download-artifact@v8
       with:
         name: package-${{ github.sha }}
@@ -143,16 +141,9 @@ jobs:
         # Explicitly add defaults to silence the FutureWarning breaking JSON output
         conda config --add channels defaults
         conda info -a
-        if [[ "$GITHUB_REF" =~ ^refs/tags/ ]]; then
-          mv conda-bld $CONDA_ROOT/conda-bld
-          conda create -n cptest local::conda-pack conda-forge::pytest conda-forge::pytest-cov defaults::python=${{ matrix.pyver }} zstandard>=0.23.0 ${{ matrix.conda_deps }}
-        else
-          conda create -n cptest conda-forge::pytest conda-forge::pytest-cov defaults::python=${{ matrix.pyver }} zstandard>=0.23.0 ${{ matrix.conda_deps }}
-        fi
+        mv conda-bld $CONDA_ROOT/conda-bld
+        conda create -n cptest local::conda-pack conda-forge::pytest conda-forge::pytest-cov defaults::python=${{ matrix.pyver }} zstandard>=0.23.0 ${{ matrix.conda_deps }}
         conda activate cptest
-        if [[ ! "$GITHUB_REF" =~ ^refs/tags/ ]]; then
-          pip install -e .
-        fi
         pytest -v -ss --cov=conda_pack --cov-branch --cov-report=xml conda_pack/tests
     - uses: codecov/codecov-action@v6
       with:
