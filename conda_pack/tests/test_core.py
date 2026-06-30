@@ -5,7 +5,7 @@ import re
 import subprocess
 import sys
 import tarfile
-import yaml
+import ruamel.yaml import YAML
 from glob import glob
 from unittest.mock import Mock, mock_open, patch
 
@@ -28,6 +28,8 @@ from .conftest import (
     py310_path,
     env_vars_path,
 )
+
+yaml = YAML()
 
 BIN_DIR_L = BIN_DIR.lower()
 SP = "Lib\\site-packages" if on_win else "lib/python3.9/site-packages"
@@ -844,7 +846,7 @@ def test_env_vars_activate_deactivate(tmpdir):
     """
     env_vars_yaml_path = os.path.join(test_dir, "..", "..", "testing", "env_yamls", "env_vars.yml")
     with open(env_vars_yaml_path) as f:
-        env_var_items = list(yaml.safe_load(f)["variables"].items())
+        env_var_items = list(yaml.load(f)["variables"].items())
     existing_key, existing_val = env_var_items[0]
     special_key, special_val = env_var_items[1]
 
