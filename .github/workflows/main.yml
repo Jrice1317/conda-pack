@@ -36,6 +36,8 @@ jobs:
         cd docs
         make html
     - name: Build the package
+      env:
+        VERSION_OVERRIDE: 0.10.0
       run: conda build conda-recipe --no-test
     - name: Reduce the size of the build artifact
       run: rm -rf /usr/share/miniconda/conda-bld/{git_cache,work,conda-pack*,*/.cache}
