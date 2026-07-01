@@ -865,7 +865,7 @@ def test_env_vars_activate_deactivate(tmpdir):
     out = subprocess.check_output(
         ["/usr/bin/env", "bash", "-c", command], stderr=subprocess.STDOUT
     ).decode()
-    assert out == "Done\n"
+    assert out.strip() == "Done"
 
 
 @pytest.mark.skipif(on_win, reason="posix only")
