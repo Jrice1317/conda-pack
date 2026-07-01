@@ -834,8 +834,40 @@ def test_windows_extended_length_path_normalization_unknown_mode():
                         f"Test case {i}: expected {expected_prefix}, got {actual_placeholder}"
                     )
 
+def test_windows_env_vars_activate_deactivate(tmpdir):
+    """Verifies core.py reads conda-meta/state, escapes values,
+    and writes correct scripts in a full activate/deactivate cycle:
+    - pre-existing var is overridden then restored
+    - non-existing var with special chars is set then unset
+    """
+    existing_key, existing_val = "MY_EXISTING_VAR", "hello"
+    special_key, special_val = "MY_SPECIAL_VAR", "red=b!%&#$=12'3"
 
-@pytest.mark.skipif(on_win, reason="posix only")
+    out_path = os.path.join(str(tmpdir), "env_vars.tar")
+    extract_path = str(tmpdir.join("env"))
+    CondaEnv.from_prefix(env_vars_path).pack(out_path)
+
+    with tarfile.open(out_path) as fil:
+        fil.extractall(extract_path)
+
+    commands = "\r\n".join([
+        f"@SET {existing_key}=preexisting",
+        f"@CALL {extract_path}\\Scripts\\activate.bat",
+        f'@IF NOT \"%{existing_key}%" == \"{existing_val}\" EXIT /B 1',
+        f'@IF NOT \"%{special_key}%" == \"{special_val}\" EXIT /B 1',
+        f"@CALL {extract_path}\\Scripts\\deactivate.bat",
+        f'@IF NOT \"%{existing_key}%" == \"preexisting\" EXIT /B 1',
+        f'@IF DEFINED \"%{special_key}%" EXIT /B 1',
+        "@ECHO 'Done'",
+    ])
+    script = tmpdir.join('test_env_vars.bat')
+    script.write(commands)
+    out = subprocess.check_output(
+        ["cmd", "/c", str(script)], stderr=subprocess.STDOUT
+    ).decode()
+    assert out.strip() == "Done"
+
+
 def test_env_vars_activate_deactivate(tmpdir):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
