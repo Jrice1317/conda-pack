@@ -870,6 +870,7 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     assert out.strip() == "Done"
 
 
+@pytest.mark.skipif(on_win, reason="Non-Windows-specific test")
 def test_env_vars_activate_deactivate(tmpdir):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
