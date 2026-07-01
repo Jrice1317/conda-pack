@@ -834,6 +834,8 @@ def test_windows_extended_length_path_normalization_unknown_mode():
                         f"Test case {i}: expected {expected_prefix}, got {actual_placeholder}"
                     )
 
+
+@pytest.mark.skipif(not on_win, reason="Windows-specific test")
 def test_windows_env_vars_activate_deactivate(tmpdir):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
