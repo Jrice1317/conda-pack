@@ -1349,7 +1349,7 @@ class Packer:
                         for k, v in env_vars.items()
                     ]
                     self._write_text_file(
-                        os.path.join("conda-meta", "activate_env_vars.bat"),
+                        os.path.join("etc", "conda", "activate.d", "activate_env_vars.bat"),
                         "".join(activate_lines)
                     )
                     deactivate_lines = [
@@ -1357,7 +1357,7 @@ class Packer:
                         for k in env_vars
                     ]
                     self._write_text_file(
-                        os.path.join("conda-meta", "deactivate_env_vars.bat"),
+                        os.path.join("etc", "conda", "deactivate.d", "deactivate_env_vars.bat"),
                         "".join(deactivate_lines)
                     )
                 else:
@@ -1367,11 +1367,11 @@ class Packer:
                         for k, v in escaped_vars.items()
                     ]
                     self._write_text_file(
-                        os.path.join("conda-meta", "activate_env_vars.sh"),
+                        os.path.join("etc", "conda", "activate.d", "activate_env_vars.sh"),
                         "".join(activate_lines)
                     )
                     self._write_text_file(
-                        os.path.join("conda-meta", "deactivate_env_vars.sh"),
+                        os.path.join("etc", "conda", "deactivate.d", "deactivate_env_vars.sh"),
                         "".join(_SH_DEACTIVATE_TEMPLATE.format(key=k) for k in env_vars),
                     )
 
