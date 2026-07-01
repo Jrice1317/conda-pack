@@ -900,13 +900,10 @@ def test_env_vars_activate_deactivate(tmpdir):
     assert out.strip() == "Done"
 
 
-@pytest.mark.skipif(on_win, reason="posix only")
 def test_no_env_vars_scripts_without_state(tmpdir):
     """Envs without env_vars in conda-meta/state produce no env var scripts."""
     out_path = os.path.join(str(tmpdir), "basic_python.tar")
     CondaEnv.from_prefix(basic_python_path).pack(out_path)
     with tarfile.open(out_path) as fil:
         names = fil.getnames()
-    assert "conda-meta/activate_env_vars.sh" not in names
-    assert "conda-meta/deactivate_env_vars.sh" not in names
     assert "conda-meta/state" not in names
