@@ -1344,9 +1344,16 @@ class Packer:
                 env_vars = json.load(f).get("env_vars", {})
             if env_vars:
                 if on_win:
+                    escaped_vars = {}
+                    for k, v in env_vars.items():
+                        val = str(v)
+                        for char in ['^', '%', '&', '!', '"', '<', '>', '|']:
+                            val = val.replace(char, '^' + char)
+                        escaped_vars[k] = val
+
                     activate_lines = [
                         _BAT_ACTIVATE_TEMPLATE.format(key=k, val=v)
-                        for k, v in env_vars.items()
+                        for k, v in escaped_vars.items()
                     ]
                     self._write_text_file(
                         os.path.join("etc", "conda", "activate.d", "activate_env_vars.bat"),

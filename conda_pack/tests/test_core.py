@@ -878,7 +878,7 @@ def test_env_vars_activate_deactivate(tmpdir):
     - non-existing var with special chars is set then unset
     """
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
-    special_key, special_val = "MY_SPECIAL_VAR", "red=b!%&#$=12'3"
+    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^"%123"
 
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
