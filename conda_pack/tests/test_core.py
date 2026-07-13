@@ -852,19 +852,21 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     with tarfile.open(out_path) as fil:
         fil.extractall(extract_path)
 
-    command = " & ".join([
-        f'SET "{existing_key}=preexisting"',
-        f'CALL "{extract_path}\\Scripts\\activate.bat"',
-        f'IF NOT "%{existing_key}%" == "{existing_val}" EXIT /B 1',
-        f'IF NOT "%{special_key}%" == "{special_val}" EXIT /B 1',
-        f'CALL "{extract_path}\\Scripts\\deactivate.bat"',
-        f'IF NOT "%{existing_key}%" == "preexisting" EXIT /B 1',
-        f'IF DEFINED {special_key} EXIT /B 1',
+    command = "\r\n ".join([
+        f'@SET "{existing_key}=preexisting"',
+        f'@CALL "{extract_path}\\Scripts\\activate"',
+        f'@IF NOT "%{existing_key}%" == "{existing_val}" EXIT /B 1',
+        f'@IF NOT "%{special_key}%" == "{special_val}" EXIT /B 1',
+        f'@CALL "{extract_path}\\Scripts\\deactivate"',
+        f'@IF NOT "%{existing_key}%" == "preexisting" EXIT /B 1',
+        f'@IF DEFINED {special_key} EXIT /B 1',
         "ECHO Done",
     ])
-    out = subprocess.check_output(
-        ["cmd.exe", "/c", command], stderr=subprocess.STDOUT
-    ).decode()
+    script = tmpdir.join('script.bat')
+    script.write(command)
+
+    out = subprocess.check_output(['cmd', '/c', str(script)], stderr=subprocess.STDOUT).decode()
+
     assert out.strip() == "Done"
 
 
