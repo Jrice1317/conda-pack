@@ -843,7 +843,7 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     - non-existing var with special chars is set then unset
     """
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
-    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^\"%123"
+    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^'%123"
 
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
@@ -853,12 +853,12 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
         fil.extractall(extract_path)
 
     commands = "\r\n".join([
-        f"@SET {existing_key}=preexisting",
-        f"@CALL {extract_path}\\Scripts\\activate.bat",
-        f'@IF NOT "%{existing_key}%" == "{existing_val}" EXIT /B 1',
-        f'@IF NOT "%{special_key}%" == "{special_val}" EXIT /B 1',
-        f"@CALL {extract_path}\\Scripts\\deactivate.bat",
-        f'@IF NOT "%{existing_key}%" == "preexisting" EXIT /B 1',
+        f'@SET "{existing_key}=preexisting"',
+        f'@CALL "{extract_path}\\Scripts\\activate.bat"',
+        f'@IF NOT "!{existing_key}!" == "!{existing_val}!" EXIT /B 1',
+        f'@IF NOT "!{special_key}!" == "!{special_val}!" EXIT /B 1',
+        f'@CALL "{extract_path}\\Scripts\\deactivate.bat"',
+        f'@IF NOT "!{existing_key}!" == "preexisting" EXIT /B 1',
         f'@IF DEFINED {special_key} EXIT /B 1',
         "@ECHO Done",
     ])
@@ -878,7 +878,7 @@ def test_env_vars_activate_deactivate(tmpdir):
     - non-existing var with special chars is set then unset
     """
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
-    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^\"%123"
+    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^'%123"
 
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
@@ -890,12 +890,12 @@ def test_env_vars_activate_deactivate(tmpdir):
     command = " && ".join([
         f'export {existing_key}=preexisting',
         f'. "{extract_path}/bin/activate"',
-        f'test "${existing_key}" = "{existing_val}"',
-        f'test "${special_key}" = "{special_val}"',
+        f'[[ "${existing_key}" == "{existing_val}" ]]',
+        f'[[ \"${special_key}\" == $"{special_val}" ]]',
         f'. "{extract_path}/bin/deactivate"',
-        f'test "${existing_key}" = preexisting',
-        f'test -z "${{{special_key}+x}}"',
-        "echo 'Done'",
+        f'[[ "${existing_key}" == "preexisting" ]]',
+        f'[[ -z "${{{special_key}+x}}" ]]',
+        "echo Done",
     ])
     out = subprocess.check_output(
         ["/usr/bin/env", "bash", "-c", command], stderr=subprocess.STDOUT

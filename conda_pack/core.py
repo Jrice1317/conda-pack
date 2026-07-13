@@ -1345,7 +1345,7 @@ class Packer:
             if env_vars:
                 if on_win:
                     activate_lines = [
-                        _BAT_ACTIVATE_TEMPLATE.format(key=k, val=str(v).replace('"', '\\"').replace('%', '%%'))
+                        _BAT_ACTIVATE_TEMPLATE.format(key=k, val=str(v).replace('"', '""').replace('%', '%%'))
                         for k, v in env_vars.items()
                     ]
                     self._write_text_file(
