@@ -852,22 +852,27 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     with tarfile.open(out_path) as fil:
         fil.extractall(extract_path)
 
-    command = "\r\n ".join([
-        f'@SET "{existing_key}=preexisting"',
-        f'@CALL "{extract_path}\\Scripts\\activate"',
-        f'@IF NOT "%{existing_key}%" == "{existing_val}" EXIT /B 1',
-        f'@IF NOT "%{special_key}%" == "{special_val}" EXIT /B 1',
-        f'@CALL "{extract_path}\\Scripts\\deactivate"',
-        f'@IF NOT "%{existing_key}%" == "preexisting" EXIT /B 1',
-        f'@IF DEFINED {special_key} EXIT /B 1',
-        "ECHO Done",
-    ])
+    command = (
+        r"@SET {existing_key}=preexisting" "\r\n"
+        r"@CALL {path}\Scripts\activate" "\r\n"
+        r"@ECHO %{existing_key}%" "\r\n"
+        r"@ECHO %{special_key}%" "\r\n"
+        r"@CALL {path}\Scripts\deactivate" "\r\n"
+        r"@ECHO %{existing_key}%" "\r\n"
+        r"@ECHO %{special_key}%" "\r\n"
+        r"@ECHO Done").format(path=extract_path, existing_key=existing_key, special_key=special_key)
     script = tmpdir.join('script.bat')
     script.write(command)
 
     out = subprocess.check_output(['cmd', '/c', str(script)], stderr=subprocess.STDOUT).decode()
 
-    assert out.strip() == "Done"
+    assert out == (
+        f"{existing_val}\r\n"
+        f"{special_val}\r\n"
+        "preexisting\r\n"
+        "\r\n"
+        "Done\r\n"
+    )
 
 
 @pytest.mark.skipif(on_win, reason="Non-Windows-specific test")
