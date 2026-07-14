@@ -859,7 +859,7 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
         r"@ECHO %{special_key}%" "\r\n"
         r"@CALL {path}\Scripts\deactivate" "\r\n"
         r"@ECHO %{existing_key}%" "\r\n"
-        r"@ECHO %{special_key}%" "\r\n"
+        r"@IF DEFINED {special_key} (ECHO STILL_SET) ELSE (ECHO UNSET)" "\r\n"
         r"@ECHO Done").format(path=extract_path, existing_key=existing_key, special_key=special_key)
     script = tmpdir.join('script.bat')
     script.write(command)
@@ -870,7 +870,7 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
         f"{existing_val}\r\n"
         f"{special_val}\r\n"
         "preexisting\r\n"
-        "\r\n"
+        f"UNSET\r\n"
         "Done\r\n"
     )
 
