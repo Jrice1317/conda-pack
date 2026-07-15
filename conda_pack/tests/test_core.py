@@ -855,10 +855,10 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     command = (
         r"@SET {existing_key}=preexisting" "\r\n"
         r"@CALL {path}\Scripts\activate" "\r\n"
-        r"@ECHO %{existing_key}%" "\r\n"
-        r"@ECHO %{special_key}%" "\r\n"
+        r'@ECHO "%{existing_key}%"' "\r\n"
+        r'@ECHO "%{special_key}%"' "\r\n"
         r"@CALL {path}\Scripts\deactivate" "\r\n"
-        r"@ECHO %{existing_key}%" "\r\n"
+        r'@ECHO "%{existing_key}%"' "\r\n"
         r"@IF DEFINED {special_key} (ECHO STILL_SET) ELSE (ECHO UNSET)" "\r\n"
         r"@ECHO Done").format(path=extract_path, existing_key=existing_key, special_key=special_key)
     script = tmpdir.join('script.bat')
