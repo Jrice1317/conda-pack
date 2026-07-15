@@ -867,9 +867,9 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     out = subprocess.check_output(['cmd', '/c', str(script)], stderr=subprocess.STDOUT).decode()
 
     assert out == (
-        f"{existing_val}\r\n"
-        f"{special_val}\r\n"
-        "preexisting\r\n"
+        f'"{existing_val}"\r\n'
+        f'"{special_val}"\r\n'
+        '"preexisting"\r\n'
         f"UNSET\r\n"
         "Done\r\n"
     )
