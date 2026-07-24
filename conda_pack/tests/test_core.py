@@ -875,15 +875,18 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     )
 
 
-@pytest.mark.skipif(on_win, reason="Non-Windows-specific test")
-def test_env_vars_activate_deactivate(tmpdir):
+@pytest.mark.skipif(on_win, reason="posix only")
+@pytest.mark.parametrize("special_key,special_val", [
+    ("MY_SPECIAL_VAR", "red=|<>!&^'%123"),
+    ("MY_QUOTED_VAR", 'say "hello"')
+])
+def test_env_vars_activate_deactivate(tmpdir, special_key, special_val):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
     - pre-existing var is overridden then restored
     - non-existing var with special chars is set then unset
     """
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
-    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^'%123"
 
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
@@ -893,20 +896,27 @@ def test_env_vars_activate_deactivate(tmpdir):
         fil.extractall(extract_path)
 
     command = " && ".join([
+        f"unset {special_key}",
         f'export {existing_key}=preexisting',
         f'. "{extract_path}/bin/activate"',
-        f'[[ "${existing_key}" == "{existing_val}" ]]',
-        f'[[ \"${special_key}\" == $"{special_val}" ]]',
+        f"""printf 'MY_EXISTING_VAR=%s\\n' "${{{existing_key}}}" """,
+        f"""printf 'MY_SPECIAL_VAR=%s\\n' "${{{special_key}}}" """,
         f'. "{extract_path}/bin/deactivate"',
-        f'[[ "${existing_key}" == "preexisting" ]]',
-        f'[[ -z "${{{special_key}+x}}" ]]',
-        "echo Done",
+        f"""printf 'MY_EXISTING_VAR=%s\\n' "${{{existing_key}}}" """,
+        f"""printf 'MY_SPECIAL_VAR=%s\\n' "${{{special_key}}}" """,
     ])
-    out = subprocess.check_output(
-        ["/usr/bin/env", "bash", "-c", command], stderr=subprocess.STDOUT
-    ).decode()
-    assert out.strip() == "Done"
 
+    out = subprocess.check_output(
+        ["/usr/bin/env", "bash", "-c", command],
+        stderr=subprocess.STDOUT,
+    ).decode()
+
+    lines = out.splitlines()
+
+    assert f"MY_EXISTING_VAR={existing_val}" in lines
+    assert "MY_EXISTING_VAR=preexisting" in lines
+    assert f"MY_SPECIAL_VAR={special_val}" in lines
+    assert f"MY_SPECIAL_VAR=" in lines
 
 def test_no_env_vars_scripts_without_state(tmpdir):
     """Envs without env_vars in conda-meta/state produce no env var scripts."""
