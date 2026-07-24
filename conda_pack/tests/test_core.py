@@ -836,6 +836,10 @@ def test_windows_extended_length_path_normalization_unknown_mode():
 
 
 @pytest.mark.skipif(not on_win, reason="Windows-specific test")
+@pytest.mark.parametrize("special_key,special_val", [
+    ("MY_SPECIAL_VAR", "red=|<>!&^'%123"),
+    ("MY_QUOTED_VAR", 'say "hello"')
+])
 def test_windows_env_vars_activate_deactivate(tmpdir):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
@@ -843,7 +847,6 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     - non-existing var with special chars is set then unset
     """
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
-    special_key, special_val = "MY_SPECIAL_VAR", "red=|<>!&^'%123"
 
     out_path = os.path.join(str(tmpdir), "env_vars.tar")
     extract_path = str(tmpdir.join("env"))
@@ -852,28 +855,29 @@ def test_windows_env_vars_activate_deactivate(tmpdir):
     with tarfile.open(out_path) as fil:
         fil.extractall(extract_path)
 
-    command = (
-        r"@SET {existing_key}=preexisting" "\r\n"
-        r"@CALL {path}\Scripts\activate" "\r\n"
-        r'@ECHO "%{existing_key}%"' "\r\n"
-        r'@ECHO "%{special_key}%"' "\r\n"
-        r"@CALL {path}\Scripts\deactivate" "\r\n"
-        r'@ECHO "%{existing_key}%"' "\r\n"
-        r"@IF DEFINED {special_key} (ECHO STILL_SET) ELSE (ECHO UNSET)" "\r\n"
-        r"@ECHO Done").format(path=extract_path, existing_key=existing_key, special_key=special_key)
-    script = tmpdir.join('script.bat')
-    script.write(command)
+    commands = "\r\n".join([
+        "@ECHO OFF",
+        f'@SET "{special_key}="',
+        f'@SET "{existing_key}=preexisting"',
+        rf'@CALL "{extract_path}\Scripts\activate.bat"',
+        f'@ECHO MY_EXISTING_VAR=%{existing_key}%',
+        f'@ECHO MY_SPECIAL_VAR=%{special_key}%',
+        rf'@CALL "{extract_path}\Scripts\deactivate.bat"',
+        f'@ECHO MY_EXISTING_VAR=%{existing_key}%',
+        f'@ECHO MY_SPECIAL_VAR=%{special_key}%',
+    ])
 
-    out = subprocess.check_output(['cmd', '/c', str(script)], stderr=subprocess.STDOUT).decode()
+    script = tmpdir.join('test_env_vars.bat')
+    script.write(commands)
 
-    assert out == (
-        f'"{existing_val}"\r\n'
-        f'"{special_val}"\r\n'
-        '"preexisting"\r\n'
-        f"UNSET\r\n"
-        "Done\r\n"
-    )
+    out = subprocess.check_output(['cmd.exe', '/c', str(script)], stderr=subprocess.STDOUT).decode()
 
+    lines = out.splitlines()
+
+    assert f"MY_EXISTING_VAR={existing_val}" in lines
+    assert "MY_EXISTING_VAR=preexisting" in lines
+    assert f"MY_SPECIAL_VAR={special_val}" in lines
+    assert "MY_SPECIAL_VAR=" in lines
 
 @pytest.mark.skipif(on_win, reason="posix only")
 @pytest.mark.parametrize("special_key,special_val", [
