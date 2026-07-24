@@ -908,11 +908,11 @@ def test_env_vars_activate_deactivate(tmpdir, special_key, special_val):
         f"unset {special_key}",
         f'export {existing_key}=preexisting',
         f'. "{extract_path}/bin/activate"',
-        f"""printf 'MY_EXISTING_VAR=%s\\n' "${{{existing_key}}}" """,
-        f"""printf 'MY_SPECIAL_VAR=%s\\n' "${{{special_key}}}" """,
+        f"""printf '{existing_key}=%s\\n' "${{{existing_key}}}" """,
+        f"""printf '{special_key}=%s\\n' "${{{special_key}}}" """,
         f'. "{extract_path}/bin/deactivate"',
-        f"""printf 'MY_EXISTING_VAR=%s\\n' "${{{existing_key}}}" """,
-        f"""printf 'MY_SPECIAL_VAR=%s\\n' "${{{special_key}}}" """,
+        f"""printf '{existing_key}=%s\\n' "${{{existing_key}}}" """,
+        f"""printf '{special_key}=%s\\n' "${{{special_key}}}" """,
     ])
 
     out = subprocess.check_output(
@@ -922,10 +922,10 @@ def test_env_vars_activate_deactivate(tmpdir, special_key, special_val):
 
     lines = out.splitlines()
 
-    assert f"MY_EXISTING_VAR={existing_val}" in lines
-    assert "MY_EXISTING_VAR=preexisting" in lines
-    assert f"MY_SPECIAL_VAR={special_val}" in lines
-    assert f"MY_SPECIAL_VAR=" in lines
+    assert f"{existing_key}={existing_val}" in lines
+    assert f"{existing_key}=preexisting" in lines
+    assert f"{special_key}={special_val}" in lines
+    assert f"{special_key}=" in lines
 
 def test_no_env_vars_scripts_without_state(tmpdir):
     """Envs without conda-meta/state produce no env var scripts."""
