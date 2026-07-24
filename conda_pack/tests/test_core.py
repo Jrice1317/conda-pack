@@ -840,7 +840,7 @@ def test_windows_extended_length_path_normalization_unknown_mode():
     ("MY_SPECIAL_VAR", "red=|<>!&^'%123"),
     ("MY_QUOTED_VAR", 'say "hello"')
 ])
-def test_windows_env_vars_activate_deactivate(tmpdir):
+def test_windows_env_vars_activate_deactivate(tmpdir, special_key, special_val):
     """Verifies core.py reads conda-meta/state, escapes values,
     and writes correct scripts in a full activate/deactivate cycle:
     - pre-existing var is overridden then restored
