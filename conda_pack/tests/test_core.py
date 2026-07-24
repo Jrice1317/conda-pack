@@ -860,11 +860,11 @@ def test_windows_env_vars_activate_deactivate(tmpdir, special_key, special_val):
         f'@SET "{special_key}="',
         f'@SET "{existing_key}=preexisting"',
         rf'@CALL "{extract_path}\Scripts\activate.bat"',
-        f'@ECHO MY_EXISTING_VAR=%{existing_key}%',
-        f'@ECHO MY_SPECIAL_VAR=%{special_key}%',
+        f"@SET {existing_key}",
+        f"@SET {special_key}",
         rf'@CALL "{extract_path}\Scripts\deactivate.bat"',
-        f'@ECHO MY_EXISTING_VAR=%{existing_key}%',
-        f'@ECHO MY_SPECIAL_VAR=%{special_key}%',
+        "@ECHO DEACTIVATED",
+        f"@SET",
     ])
 
     script = tmpdir.join('test_env_vars.bat')
@@ -873,11 +873,16 @@ def test_windows_env_vars_activate_deactivate(tmpdir, special_key, special_val):
     out = subprocess.check_output(['cmd.exe', '/c', str(script)], stderr=subprocess.STDOUT).decode()
 
     lines = out.splitlines()
+    deactivated = lines[lines.index("DEACTIVATED") + 1:]
 
-    assert f"MY_EXISTING_VAR={existing_val}" in lines
-    assert "MY_EXISTING_VAR=preexisting" in lines
-    assert f"MY_SPECIAL_VAR={special_val}" in lines
-    assert "MY_SPECIAL_VAR=" in lines
+    assert f"{existing_key}={existing_val}" in lines
+    assert f"{special_key}={special_val}" in lines
+
+    assert f"{existing_key}=preexisting" in deactivated
+    assert not any(
+        line.startswith(f"{special_key}=") 
+        for line in deactivated
+    )
 
 @pytest.mark.skipif(on_win, reason="posix only")
 @pytest.mark.parametrize("special_key,special_val", [
