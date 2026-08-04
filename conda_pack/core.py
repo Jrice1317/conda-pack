@@ -1196,6 +1196,22 @@ _BAT_DEACTIVATE_TEMPLATE = """\
 @SET "_CONDA_PACK_OLD_{key}="
 """
 
+_FISH_ACTIVATE_TEMPLATE = """\
+if set -q {key}
+    set -gx _CONDA_PACK_OLD_{key} ${{{key}}}
+end
+set -gx {key} '{val}'
+"""
+
+_FISH_DEACTIVATE_TEMPLATE = """\
+if set -q _CONDA_PACK_OLD_{key}
+    set -gx {key} $_CONDA_PACK_OLD_{key}
+    set -e _CONDA_PACK_OLD_{key}
+else
+    set -e {key}
+end
+"""
+
 
 class Packer:
     def __init__(self, prefix, archive, dest_prefix=None, parcel=None):
