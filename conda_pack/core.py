@@ -1198,7 +1198,7 @@ _BAT_DEACTIVATE_TEMPLATE = """\
 
 _FISH_ACTIVATE_TEMPLATE = """\
 if set -q {key}
-    set -gx _CONDA_PACK_OLD_{key} ${{{key}}}
+    set -gx _CONDA_PACK_OLD_{key} ${key}
 end
 set -gx {key} '{val}'
 """
