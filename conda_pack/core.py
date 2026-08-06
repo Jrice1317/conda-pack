@@ -1322,6 +1322,17 @@ class Packer:
             self.archive.add(fil.name, fpath)
         finally:
             os.unlink(fil.name)
+    
+    def _write_env_var_scripts(self, env_vars, escape_function, activate_tmpl, deactivate_tmpl, ext):
+            escaped_vars = {k: escape_function(str(v)) for k, v in env_vars.items()}
+            self._write_text_file(
+                os.path.join("etc", "conda", "activate.d", f"activate_env_vars.{ext}"),
+                "".join(activate_tmpl.format(key=k, val=v) for k, v in escaped_vars.items()),
+            )
+            self._write_text_file(
+                os.path.join("etc", "conda", "deactivate.d", f"deactivate_env_vars.{ext}"),
+                "".join(deactivate_tmpl.format(key=k) for k in env_vars),
+            )
 
     def finish(self):
         from . import __version__  # local import to avoid circular imports
@@ -1359,31 +1370,24 @@ class Packer:
             with open(state_path) as f:
                 env_vars = json.load(f).get("env_vars", {})
             if env_vars:
-                def _write_env_var_script(escape, activate_tmpl, deactivate_tmpl, ext):
-                    escaped_vars = {k: escape(str(v)) for k, v in env_vars.items()}
-                    self._write_text_file(
-                        os.path.join("etc", "conda", "activate.d", f"activate_env_vars.{ext}"),
-                        "".join(activate_tmpl.format(key=k, val=v) for k, v in escaped_vars.items()),
-                    )
-                    self._write_text_file(
-                        os.path.join("etc", "conda", "deactivate.d", f"deactivate_env_vars.{ext}"),
-                        "".join(deactivate_tmpl.format(key=k) for k in env_vars),
-                    )
                 if on_win:
-                    _write_env_var_script(
+                    self._write_env_var_scripts(
+                        env_vars,
                         lambda v: v.replace("%", "%%"),
                         _BAT_ACTIVATE_TEMPLATE,
                         _BAT_DEACTIVATE_TEMPLATE,
                         "bat"
                     )
                 else:
-                    _write_env_var_script(
+                    self._write_env_var_scripts(
+                        env_vars,
                         lambda v: v.replace("'", "'\\''"),
                         _SH_ACTIVATE_TEMPLATE,
                         _SH_DEACTIVATE_TEMPLATE,
                         "sh"
                     )
-                    _write_env_var_script(
+                    self._write_env_var_scripts(
+                        env_vars,
                         lambda v: v.replace("\\", "\\\\").replace("'", "\\'"),
                         _FISH_ACTIVATE_TEMPLATE,
                         _FISH_DEACTIVATE_TEMPLATE,
