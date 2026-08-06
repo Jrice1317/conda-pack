@@ -906,7 +906,6 @@ def test_env_vars_activate_deactivate(tmpdir, special_key, special_val):
         fil.extractall(extract_path)
 
     command = " && ".join([
-        f"unset {special_key}",
         f'export {existing_key}=preexisting',
         f'. "{extract_path}/bin/activate"',
         f"""printf '{existing_key}=%s\\n' "${{{existing_key}}}" """,
