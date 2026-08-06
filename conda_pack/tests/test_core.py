@@ -930,15 +930,13 @@ def test_env_vars_activate_deactivate(tmpdir, special_key, special_val):
 
 
 @pytest.mark.skipif(on_win, reason="posix only")
+@pytest.mark.skipif(shutil.which("fish") is None, reason="fish shell not available")
 @pytest.mark.parametrize("special_key,special_val", [
     ("MY_SPECIAL_VAR", "red=|<>!&^'%123"),
     ("MY_QUOTED_VAR", 'say "hello"')
 ])
 def test_fish_env_vars_activate_deactivate(tmpdir, special_key, special_val):
     """Same as test_env_vars_activate_deactivate, but for fish shell"""
-    if shutil.which("fish") is None:
-        pytest.skip("fish shell not available")
-
     existing_key, existing_val = "MY_EXISTING_VAR", "hello"
 
     out_path = os.path.join(str(tmpdir), "env_vars_fish.tar")
@@ -949,8 +947,8 @@ def test_fish_env_vars_activate_deactivate(tmpdir, special_key, special_val):
         fil.extractall(extract_path)
 
     command = " && ".join([
-        f'set -gx {existing_key} preexisting',
         f'. "{extract_path}/bin/activate.fish"',
+        f'set -gx {existing_key} preexisting',
         f'printf "{existing_key}=%s\\n" "${existing_key}"',
         f'printf "{special_key}=%s\\n" "${special_key}"',
         "deactivate",
